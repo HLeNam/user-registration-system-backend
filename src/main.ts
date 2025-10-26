@@ -21,7 +21,7 @@ async function bootstrap() {
       'http://localhost:3000',
       'http://localhost:5173',
       'http://localhost:4173',
-      'https://your-frontend-domain.com',
+      process.env.FRONTEND_URL!,
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
