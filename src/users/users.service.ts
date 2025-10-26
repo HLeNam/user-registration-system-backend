@@ -1,9 +1,9 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { HashingProvider } from 'src/auth/provider/hashing.provider';
-import { DuplicateException } from 'src/common/exceptions/custom.exceptions';
-import { CreateUserDto } from 'src/users/dtos/create-user.dto';
-import { User } from 'src/users/entities/user.entity';
+import { HashingProvider } from '../auth/provider/hashing.provider';
+import { DuplicateException } from '../common/exceptions/custom.exceptions';
+import { CreateUserDto } from './dtos/create-user.dto';
+import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()

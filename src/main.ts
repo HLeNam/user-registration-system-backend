@@ -1,11 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { CustomValidationPipe } from 'src/common/pipes/validation.pipe';
-import { ResponseInterceptor } from 'src/common/interceptors/response.interceptor';
-import { AllExceptionsFilter } from 'src/common/filters/all-exceptions.filter';
-import { HttpExceptionFilter } from 'src/common/filters/http-exception.filter';
-import { ValidationExceptionFilter } from 'src/common/filters/validation-exception.filter';
+import { CustomValidationPipe } from '../src/common/pipes/validation.pipe';
+import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
+import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
+import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
+import { ValidationExceptionFilter } from '../src/common/filters/validation-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

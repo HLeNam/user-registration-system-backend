@@ -1,13 +1,13 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import authConfig from 'src/auth/config/auth.config';
-import { ActiveUserType } from 'src/auth/interfaces/active-user-type.interface';
+import authConfig from './config/auth.config';
+import { ActiveUserType } from './interfaces/active-user-type.interface';
 import {
   JwtPayload,
   TokenPair,
-} from 'src/common/interfaces/api-response.interface';
-import { User } from 'src/users/entities/user.entity';
+} from '../common/interfaces/api-response.interface';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class JwtAuthService {

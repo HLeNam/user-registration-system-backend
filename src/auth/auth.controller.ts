@@ -6,13 +6,13 @@ import {
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
-import { AuthService } from 'src/auth/auth.service';
-import { LoginDto } from 'src/auth/dtos/login.dto';
-import { RefreshTokenDto } from 'src/auth/dtos/refresh-token.dto';
-import { RegisterDto } from 'src/auth/dtos/register.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { GetUser } from 'src/common/decorators/get-user.decorator';
-import { User } from 'src/users/entities/user.entity';
+import { AuthService } from './auth.service';
+import { LoginDto } from './dtos/login.dto';
+import { RefreshTokenDto } from './dtos/refresh-token.dto';
+import { RegisterDto } from './dtos/register.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { GetUser } from '../common/decorators/get-user.decorator';
+import { User } from '../users/entities/user.entity';
 
 @Controller('auth')
 export class AuthController {

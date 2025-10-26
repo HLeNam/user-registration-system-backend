@@ -6,12 +6,12 @@ import {
 } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import authConfig from 'src/auth/config/auth.config';
-import { LoginDto } from 'src/auth/dtos/login.dto';
-import { RegisterDto } from 'src/auth/dtos/register.dto';
-import { JwtAuthService } from 'src/auth/jwt.service';
-import { HashingProvider } from 'src/auth/provider/hashing.provider';
-import { UsersService } from 'src/users/users.service';
+import authConfig from './config/auth.config';
+import { LoginDto } from './dtos/login.dto';
+import { RegisterDto } from './dtos/register.dto';
+import { JwtAuthService } from './jwt.service';
+import { HashingProvider } from './provider/hashing.provider';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AuthService {
