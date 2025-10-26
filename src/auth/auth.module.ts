@@ -8,6 +8,8 @@ import authConfig from './config/auth.config';
 import { UsersModule } from '../users/users.module';
 import { JwtAuthService } from './jwt.service';
 import { AuthController } from './auth.controller';
+import { CookieService } from 'src/common/services/cookie.service';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Module({
   providers: [
@@ -17,9 +19,17 @@ import { AuthController } from './auth.controller';
       useClass: BcryptProvider,
     },
     JwtAuthService,
+    CookieService,
+    JwtAuthGuard,
   ],
   controllers: [AuthController],
-  exports: [HashingProvider],
+  exports: [
+    HashingProvider,
+    JwtAuthService,
+    AuthService,
+    JwtAuthGuard,
+    CookieService,
+  ],
   imports: [
     forwardRef(() => UsersModule),
     ConfigModule.forFeature(authConfig),
