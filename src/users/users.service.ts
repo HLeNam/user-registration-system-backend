@@ -1,0 +1,55 @@
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { HashingProvider } from 'src/auth/provider/hashing.provider';
+import { DuplicateException } from 'src/common/exceptions/custom.exceptions';
+import { CreateUserDto } from 'src/users/dtos/create-user.dto';
+import { User } from 'src/users/entities/user.entity';
+import { Repository } from 'typeorm';
+
+@Injectable()
+export class UsersService {
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+
+    @Inject(forwardRef(() => HashingProvider))
+    private readonly hashingProvider: HashingProvider,
+  ) {}
+
+  async createUser(createUserDto: CreateUserDto) {
+    const { email, password } = createUserDto;
+
+    const existingUser = await this.usersRepository.findOne({
+      where: [{ email: email }],
+    });
+
+    if (existingUser) {
+      throw new DuplicateException('email', email);
+    }
+
+    const hashedPassword = await this.hashingProvider.hash(password);
+
+    const newUser = this.usersRepository.create({
+      email,
+      password: hashedPassword,
+    });
+
+    const savedUser = await this.usersRepository.save(newUser);
+
+    return savedUser;
+  }
+
+  async updateUserRefreshToken(userId: string, refreshToken: string | null) {
+    await this.usersRepository.update(userId, {
+      refreshToken: refreshToken ?? '',
+    });
+  }
+
+  async findUserByEmail(email: string): Promise<User | null> {
+    return await this.usersRepository.findOne({ where: { email: email } });
+  }
+
+  async findUserById(userId: string): Promise<User | null> {
+    return await this.usersRepository.findOne({ where: { id: userId } });
+  }
+}
