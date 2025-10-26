@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   forwardRef,
   Inject,
   Injectable,
@@ -73,7 +74,7 @@ export class AuthService {
     const foundUser = await this.usersService.findUserByEmail(email);
 
     if (!foundUser) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new BadRequestException('Invalid email or password');
     }
 
     const isPasswordValid = await this.hashingProvider.compare({
@@ -82,7 +83,7 @@ export class AuthService {
     });
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new BadRequestException('Invalid email or password');
     }
 
     const tokens = await this.jwtAuthService.generateTokens(foundUser);
