@@ -14,18 +14,26 @@ export interface CookieOptions {
 export class CookieService {
   constructor(private configService: ConfigService) {}
 
-  setAccessTokenCookie(response: Response, token: string): void {
+  setAccessTokenCookie(
+    response: Response,
+    token: string,
+    expiresAtTimestamp?: number,
+  ): void {
     const cookieName =
       this.configService.get('ACCESS_TOKEN_COOKIE_NAME') || 'access_token';
-    const options = this.getAccessTokenCookieOptions();
+    const options = this.getAccessTokenCookieOptions(expiresAtTimestamp);
 
     response.cookie(cookieName, token, options);
   }
 
-  setRefreshTokenCookie(response: Response, token: string): void {
+  setRefreshTokenCookie(
+    response: Response,
+    token: string,
+    expiresAtTimestamp?: number,
+  ): void {
     const cookieName =
       this.configService.get('REFRESH_TOKEN_COOKIE_NAME') || 'refresh_token';
-    const options = this.getRefreshTokenCookieOptions();
+    const options = this.getRefreshTokenCookieOptions(expiresAtTimestamp);
 
     response.cookie(cookieName, token, options);
   }
@@ -40,17 +48,25 @@ export class CookieService {
     response.clearCookie(refreshTokenName, this.getBaseCookieOptions());
   }
 
-  private getAccessTokenCookieOptions(): CookieOptions {
+  private getAccessTokenCookieOptions(
+    expiresAtTimestamp?: number,
+  ): CookieOptions {
     return {
       ...this.getBaseCookieOptions(),
-      maxAge: 15 * 60 * 1000, // 15 minutes in milliseconds
+      maxAge: expiresAtTimestamp
+        ? (expiresAtTimestamp - Math.floor(Date.now() / 1000)) * 1000
+        : 15 * 60 * 1000, // 15 minutes = 15 * 60 * 1000 ms
     };
   }
 
-  private getRefreshTokenCookieOptions(): CookieOptions {
+  private getRefreshTokenCookieOptions(
+    expiresAtTimestamp?: number,
+  ): CookieOptions {
     return {
       ...this.getBaseCookieOptions(),
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+      maxAge: expiresAtTimestamp
+        ? (expiresAtTimestamp - Math.floor(Date.now() / 1000)) * 1000
+        : 7 * 24 * 60 * 60 * 1000, // 7 days = 7 * 24 * 60 * 60 * 1000 ms
     };
   }
 
@@ -58,7 +74,7 @@ export class CookieService {
     const isProduction = this.configService.get('ENV_NODE') === 'production';
 
     return {
-      httpOnly: true, // Prevent XSS
+      httpOnly: true,
       secure:
         isProduction || this.configService.get('COOKIE_SECURE') === 'true',
       sameSite: (this.configService.get('COOKIE_SAME_SITE') as any) || 'lax',

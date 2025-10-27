@@ -39,10 +39,22 @@ export class UsersService {
     return savedUser;
   }
 
-  async updateUserRefreshToken(userId: string, refreshToken: string | null) {
-    await this.usersRepository.update(userId, {
-      refreshToken: refreshToken ?? '',
-    });
+  async updateUserRefreshToken(
+    userId: string,
+    refreshToken: string | null,
+    expiresAt?: Date | null,
+    issuedAt?: Date | null,
+  ) {
+    const updateData: any = {
+      refreshToken,
+      refreshTokenExpiresAt: expiresAt,
+    };
+
+    if (issuedAt !== undefined) {
+      updateData.refreshTokenIssuedAt = issuedAt;
+    }
+
+    return await this.usersRepository.update(userId, updateData);
   }
 
   async findUserByEmail(email: string): Promise<User | null> {

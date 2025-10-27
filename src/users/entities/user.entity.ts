@@ -20,6 +20,12 @@ export class User {
   @Column({ nullable: true, length: 500 })
   refreshToken: string;
 
+  @Column({ nullable: true, type: 'timestamp' })
+  refreshTokenExpiresAt: Date;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  refreshTokenIssuedAt: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -3,11 +3,12 @@ import { type ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import authConfig from './config/auth.config';
 import { ActiveUserType } from './interfaces/active-user-type.interface';
-import {
-  JwtPayload,
-  TokenPair,
-} from '../common/interfaces/api-response.interface';
+import { JwtPayload } from '../common/interfaces/api-response.interface';
 import { User } from '../users/entities/user.entity';
+import {
+  GenerateTokensOptions,
+  TokenWithExpiry,
+} from './interfaces/token.interface';
 
 @Injectable()
 export class JwtAuthService {
@@ -33,14 +34,32 @@ export class JwtAuthService {
     );
   }
 
-  async generateTokens(user: User): Promise<TokenPair> {
+  async generateTokens(
+    user: User,
+    options?: GenerateTokensOptions,
+  ): Promise<TokenWithExpiry> {
+    const now = Math.floor(Date.now() / 1000);
+    const accessTokenExpiresAt = now + this.authConfiguration.expiresIn;
+
+    // Nếu refresh token tồn tại, dùng expiry cũ (giảm dần)
+    // Nếu không, tính mới (7 ngày từ hiện tại)
+    const refreshTokenExpiresAt =
+      options?.existingRefreshTokenExpiresAt ||
+      now + this.authConfiguration.refreshExpiresIn;
+
+    // Tính expiresIn cho JWT dựa trên refreshTokenExpiresAt
+    const jwtRefreshExpiresIn = Math.max(
+      refreshTokenExpiresAt - now,
+      this.authConfiguration.refreshExpiresIn,
+    );
+
     const [accessToken, refreshToken] = await Promise.all([
       this.signToken<Partial<ActiveUserType>>(
         user.id,
         this.authConfiguration.expiresIn,
         { email: user.email, tokenType: 'access' },
       ),
-      this.signToken(user.id, this.authConfiguration.refreshExpiresIn, {
+      this.signToken(user.id, jwtRefreshExpiresIn, {
         email: user.email,
         tokenType: 'refresh',
       }),
@@ -49,6 +68,11 @@ export class JwtAuthService {
     return {
       accessToken,
       refreshToken,
+      accessTokenExpiresAt,
+      refreshTokenExpiresAt,
+      refreshTokenIssuedAt: options?.existingRefreshTokenExpiresAt
+        ? Math.floor(user.refreshTokenIssuedAt.getTime() / 1000)
+        : now,
     };
   }
 
@@ -60,6 +84,10 @@ export class JwtAuthService {
 
       if (payload.tokenType !== 'access') {
         throw new UnauthorizedException('Invalid token type');
+      }
+
+      if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+        throw new UnauthorizedException('Access token has expired');
       }
 
       return payload;
@@ -78,9 +106,22 @@ export class JwtAuthService {
         throw new UnauthorizedException('Invalid token type');
       }
 
+      if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+        throw new UnauthorizedException('Refresh token has expired');
+      }
+
       return payload;
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
+  extractTokenExpiry(token: string): number {
+    try {
+      const decoded = this.jwtService.decode(token) as any;
+      return decoded?.exp || 0;
+    } catch {
+      return 0;
     }
   }
 }

@@ -43,16 +43,26 @@ export class AuthService {
     });
 
     const tokens = await this.jwtAuthService.generateTokens(newUser);
+    const now = Math.floor(Date.now() / 1000);
 
     await this.usersService.updateUserRefreshToken(
       newUser.id,
       tokens.refreshToken,
+      new Date(tokens.refreshTokenExpiresAt * 1000),
+      new Date(now * 1000),
     );
 
-    // Set cookies if response object is provided
     if (response) {
-      this.cookieService.setAccessTokenCookie(response, tokens.accessToken);
-      this.cookieService.setRefreshTokenCookie(response, tokens.refreshToken);
+      this.cookieService.setAccessTokenCookie(
+        response,
+        tokens.accessToken,
+        tokens.accessTokenExpiresAt,
+      );
+      this.cookieService.setRefreshTokenCookie(
+        response,
+        tokens.refreshToken,
+        tokens.refreshTokenExpiresAt,
+      );
     }
 
     return {
@@ -87,15 +97,26 @@ export class AuthService {
     }
 
     const tokens = await this.jwtAuthService.generateTokens(foundUser);
+    const now = Math.floor(Date.now() / 1000);
 
     await this.usersService.updateUserRefreshToken(
       foundUser.id,
       tokens.refreshToken,
+      new Date(tokens.refreshTokenExpiresAt * 1000),
+      new Date(now * 1000),
     );
 
     if (response) {
-      this.cookieService.setAccessTokenCookie(response, tokens.accessToken);
-      this.cookieService.setRefreshTokenCookie(response, tokens.refreshToken);
+      this.cookieService.setAccessTokenCookie(
+        response,
+        tokens.accessToken,
+        tokens.accessTokenExpiresAt,
+      );
+      this.cookieService.setRefreshTokenCookie(
+        response,
+        tokens.refreshToken,
+        tokens.refreshTokenExpiresAt,
+      );
     }
 
     return {
@@ -112,17 +133,15 @@ export class AuthService {
   }
 
   async refreshTokens(refreshToken: string, response?: Response) {
-    // Verify refresh token
     const payload = await this.jwtAuthService.verifyRefreshToken(refreshToken);
 
-    // Find user
     const foundUser = await this.usersService.findUserById(payload.sub);
 
     if (!foundUser || !foundUser.refreshToken) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    // check token is expired or not
+    // Verify refresh token còn hiệu lực
     await this.jwtAuthService.verifyRefreshToken(foundUser.refreshToken);
 
     const isRefreshTokenValid = refreshToken === foundUser.refreshToken;
@@ -131,20 +150,50 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    // Generate new tokens
-    const tokens = await this.jwtAuthService.generateTokens(foundUser);
-    console.log('🚀 ~ AuthService ~ refreshTokens ~ tokens:', tokens);
+    const now = Math.floor(Date.now() / 1000);
+    const currentExpiresAt = Math.floor(
+      foundUser.refreshTokenExpiresAt.getTime() / 1000,
+    );
 
-    // Update refresh token
+    // Check nếu token đã hết hạn
+    if (now >= currentExpiresAt) {
+      await this.usersService.updateUserRefreshToken(
+        foundUser.id,
+        null,
+        null,
+        null,
+      );
+      throw new UnauthorizedException(
+        'Refresh token has expired. Please login again.',
+      );
+    }
+
+    // Generate new tokens với thời gian còn lại
+    const tokens = await this.jwtAuthService.generateTokens(foundUser, {
+      existingRefreshTokenExpiresAt: currentExpiresAt,
+    });
+
+    // Giữ nguyên expiresAt cũ - không reset
+    const expiresAt = currentExpiresAt;
+
     await this.usersService.updateUserRefreshToken(
       foundUser.id,
       tokens.refreshToken,
+      new Date(expiresAt * 1000),
+      foundUser.refreshTokenIssuedAt,
     );
 
-    // Set cookies if response object is provided
     if (response) {
-      this.cookieService.setAccessTokenCookie(response, tokens.accessToken);
-      this.cookieService.setRefreshTokenCookie(response, tokens.refreshToken);
+      this.cookieService.setAccessTokenCookie(
+        response,
+        tokens.accessToken,
+        tokens.accessTokenExpiresAt,
+      );
+      this.cookieService.setRefreshTokenCookie(
+        response,
+        tokens.refreshToken,
+        expiresAt,
+      );
     }
 
     return {
@@ -154,9 +203,8 @@ export class AuthService {
   }
 
   async logout(userId: string, response?: Response) {
-    await this.usersService.updateUserRefreshToken(userId, null);
+    await this.usersService.updateUserRefreshToken(userId, null, null, null);
 
-    // Clear cookies if response object is provided
     if (response) {
       this.cookieService.clearAuthCookies(response);
     }
