@@ -224,7 +224,7 @@ npm run start:debug
 
 - Change the port in `main.ts` or use:
   ```bash
-  PORT=3001 npm run start:dev
+  PORT=3000 npm run start:dev
   ```
 
 ### CORS Error
